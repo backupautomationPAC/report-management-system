@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  AE
+  SUPERVISOR
+  ACCOUNTING
+}
+
+enum ReportStatus {
+  DRAFT
+  PENDING_AE
+  PENDING_SUPERVISOR
+  PENDING_ACCOUNTING
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(AE)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  reportsCreated Report[]    @relation("ReportCreator")
+  approvals      Approval[]
+
+  @@map("users")
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  title        String
+  clientName   String
+  reportPeriod String
+  startDate    DateTime
+  endDate      DateTime
+  status       ReportStatus @default(DRAFT)
+  content      String?      @db.Text
+  fileUrl      String?
+  createdById  String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  createdBy    User       @relation("ReportCreator", fields: [createdById], references: [id])
+  approvals    Approval[]
+  harvestData  HarvestEntry[]
+
+  @@map("reports")
+}
+
+model Approval {
+  id       String         @id @default(cuid())
+  reportId String
+  userId   String
+  status   ApprovalStatus @default(PENDING)
+  comments String?        @db.Text
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([reportId, userId])
+  @@map("approvals")
+}
+
+model HarvestEntry {
+  id          String   @id @default(cuid())
+  reportId    String?
+  clientName  String
+  projectName String
+  taskName    String
+  hours       Float
+  date        DateTime
+  notes       String?  @db.Text
+  userName    String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  report Report? @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("harvest_entries")
+}
+
+model AppSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+
+  @@map("app_settings")
+}
