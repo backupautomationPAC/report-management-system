@@ -10,106 +10,85 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  ADMIN
-  AE
-  SUPERVISOR
-  ACCOUNTING
-}
-
-enum ReportStatus {
-  DRAFT
-  PENDING_AE
-  PENDING_SUPERVISOR
-  PENDING_ACCOUNTING
-  APPROVED
-  REJECTED
-}
-
-enum ApprovalStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 model User {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
   name      String
-  role      UserRole @default(AE)
-  isActive  Boolean  @default(true)
+  role      Role     @default(AE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  reportsCreated Report[]    @relation("ReportCreator")
-  approvals      Approval[]
+  submittedReports    Report[] @relation("SubmittedBy")
+  aeApprovedReports   Report[] @relation("AEApprovedBy")
+  supervisorApprovedReports Report[] @relation("SupervisorApprovedBy")
+  accountingApprovedReports Report[] @relation("AccountingApprovedBy")
 
   @@map("users")
 }
 
 model Report {
-  id           String       @id @default(cuid())
-  title        String
-  clientName   String
-  reportPeriod String
-  startDate    DateTime
-  endDate      DateTime
-  status       ReportStatus @default(DRAFT)
-  content      String?      @db.Text
-  fileUrl      String?
-  createdById  String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                    Int      @id @default(autoincrement())
+  clientName           String
+  reportPeriod         String
+  startDate            DateTime
+  endDate              DateTime
+  content              String?
+  filePath             String?
+  status               ReportStatus @default(DRAFT)
 
-  // Relations
-  createdBy    User       @relation("ReportCreator", fields: [createdById], references: [id])
-  approvals    Approval[]
-  harvestData  HarvestEntry[]
+  // Timestamps
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Submitted by
+  submittedById        Int
+  submittedBy          User     @relation("SubmittedBy", fields: [submittedById], references: [id])
+
+  // AE Approval
+  aeApprovedById       Int?
+  aeApprovedBy         User?    @relation("AEApprovedBy", fields: [aeApprovedById], references: [id])
+  aeApprovedAt         DateTime?
+
+  // Supervisor Approval
+  supervisorApprovedById Int?
+  supervisorApprovedBy   User?  @relation("SupervisorApprovedBy", fields: [supervisorApprovedById], references: [id])
+  supervisorApprovedAt   DateTime?
+
+  // Accounting Approval
+  accountingApprovedById Int?
+  accountingApprovedBy   User?  @relation("AccountingApprovedBy", fields: [accountingApprovedById], references: [id])
+  accountingApprovedAt   DateTime?
 
   @@map("reports")
 }
 
-model Approval {
-  id       String         @id @default(cuid())
-  reportId String
-  userId   String
-  status   ApprovalStatus @default(PENDING)
-  comments String?        @db.Text
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-
-  // Relations
-  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@unique([reportId, userId])
-  @@map("approvals")
-}
-
-model HarvestEntry {
-  id          String   @id @default(cuid())
-  reportId    String?
+model HarvestCache {
+  id          Int      @id @default(autoincrement())
   clientName  String
   projectName String
   taskName    String
   hours       Float
   date        DateTime
-  notes       String?  @db.Text
+  notes       String?
   userName    String
-  createdAt   DateTime @default(now())
+  cachedAt    DateTime @default(now())
 
-  // Relations
-  report Report? @relation(fields: [reportId], references: [id], onDelete: Cascade)
-
-  @@map("harvest_entries")
+  @@map("harvest_cache")
 }
 
-model AppSetting {
-  id    String @id @default(cuid())
-  key   String @unique
-  value String @db.Text
+enum Role {
+  AE
+  SUPERVISOR
+  ACCOUNTING
+  ADMIN
+}
 
-  @@map("app_settings")
+enum ReportStatus {
+  DRAFT
+  PENDING_SUPERVISOR
+  PENDING_ACCOUNTING
+  APPROVED
+  REJECTED
 }
