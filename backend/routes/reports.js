@@ -1,73 +1,54 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { PrismaClient } = require('@prisma/client');
 const { auth, requireRole } = require('../middleware/auth');
-const HarvestService = require('../services/harvest');
-const OpenAIService = require('../services/openai');
-const DocumentService = require('../services/document');
-
+const harvestService = require('../services/harvest');
+const openaiService = require('../services/openai');
 const router = express.Router();
-const prisma = new PrismaClient();
-const harvestService = new HarvestService();
-const openaiService = new OpenAIService();
-const documentService = new DocumentService();
+
+// In-memory reports store (replace with database in production)
+let reports = [
+  {
+    id: 1,
+    clientName: 'BESH RESTAURANT GROUP',
+    reportPeriod: 'May 2025',
+    startDate: '2025-05-01',
+    endDate: '2025-05-31',
+    status: 'pending_ae',
+    createdAt: new Date().toISOString(),
+    submittedBy: 'admin@tegpr.com',
+    content: 'Sample report content for Besh Restaurant Group...'
+  }
+];
 
 // Get all reports
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, (req, res) => {
   try {
-    const reports = await prisma.report.findMany({
-      include: {
-        submittedBy: {
-          select: { id: true, name: true, email: true }
-        },
-        aeApprovedBy: {
-          select: { id: true, name: true, email: true }
-        },
-        supervisorApprovedBy: {
-          select: { id: true, name: true, email: true }
-        },
-        accountingApprovedBy: {
-          select: { id: true, name: true, email: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const userReports = req.user.role === 'admin' ? reports : 
+                       reports.filter(r => r.submittedBy === req.user.email);
 
-    res.json(reports);
+    res.json({ reports: userReports });
   } catch (error) {
-    console.error('Get reports error:', error);
+    console.error('Error fetching reports:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Get single report
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', auth, (req, res) => {
   try {
-    const report = await prisma.report.findUnique({
-      where: { id: parseInt(req.params.id) },
-      include: {
-        submittedBy: {
-          select: { id: true, name: true, email: true }
-        },
-        aeApprovedBy: {
-          select: { id: true, name: true, email: true }
-        },
-        supervisorApprovedBy: {
-          select: { id: true, name: true, email: true }
-        },
-        accountingApprovedBy: {
-          select: { id: true, name: true, email: true }
-        }
-      }
-    });
-
+    const report = reports.find(r => r.id === parseInt(req.params.id));
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
+    // Check permissions
+    if (req.user.role !== 'admin' && report.submittedBy !== req.user.email) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     res.json(report);
   } catch (error) {
-    console.error('Get report error:', error);
+    console.error('Error fetching report:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -75,7 +56,7 @@ router.get('/:id', auth, async (req, res) => {
 // Create new report
 router.post('/', [
   auth,
-  body('clientName').notEmpty().trim(),
+  body('clientName').notEmpty(),
   body('startDate').isISO8601(),
   body('endDate').isISO8601()
 ], async (req, res) => {
@@ -87,138 +68,106 @@ router.post('/', [
 
     const { clientName, startDate, endDate } = req.body;
 
-    // Fetch data from Harvest
-    const timeEntries = await harvestService.getTimeEntries(startDate, endDate, clientName);
+    // Fetch Harvest data
+    let harvestData = [];
+    try {
+      harvestData = await harvestService.getTimeEntries(startDate, endDate, clientName);
+    } catch (error) {
+      console.warn('Harvest API error:', error.message);
+      // Continue with empty data if Harvest fails
+    }
 
-    // Generate report content with OpenAI
-    const reportContent = await openaiService.generateReport(timeEntries, clientName, startDate, endDate);
+    // Generate content with OpenAI
+    let content = `Monthly Status Report for ${clientName}\n\nReporting Period: ${startDate} to ${endDate}\n\n`;
 
-    // Create Word document
-    const filePath = await documentService.generateDocument(reportContent, clientName, startDate, endDate);
-
-    // Save to database
-    const reportPeriod = new Date(startDate).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long' 
-    });
-
-    const report = await prisma.report.create({
-      data: {
-        clientName,
-        reportPeriod,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        content: reportContent,
-        filePath,
-        status: 'DRAFT',
-        submittedById: req.user.id
-      },
-      include: {
-        submittedBy: {
-          select: { id: true, name: true, email: true }
-        }
+    try {
+      if (harvestData.length > 0) {
+        content = await openaiService.generateReportContent(harvestData, clientName, startDate, endDate);
+      } else {
+        content += 'No time entries found for this period. Please add manual content.';
       }
-    });
+    } catch (error) {
+      console.warn('OpenAI API error:', error.message);
+      content += 'Report content generation failed. Please add manual content.';
+    }
 
-    res.status(201).json(report);
+    // Create report
+    const newReport = {
+      id: reports.length + 1,
+      clientName,
+      reportPeriod: new Date(startDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      startDate,
+      endDate,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      submittedBy: req.user.email,
+      content
+    };
+
+    reports.push(newReport);
+
+    res.status(201).json(newReport);
   } catch (error) {
-    console.error('Create report error:', error);
+    console.error('Error creating report:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Approve report
-router.post('/:id/approve', auth, async (req, res) => {
+router.post('/:id/approve', auth, (req, res) => {
   try {
-    const reportId = parseInt(req.params.id);
-    const { action } = req.body; // 'approve' or 'reject'
-
-    const report = await prisma.report.findUnique({
-      where: { id: reportId }
-    });
-
+    const report = reports.find(r => r.id === parseInt(req.params.id));
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    let updateData = {};
+    // Status progression logic
+    const statusFlow = {
+      'draft': 'pending_ae',
+      'pending_ae': 'pending_supervisor',
+      'pending_supervisor': 'pending_accounting',
+      'pending_accounting': 'approved'
+    };
 
-    // Determine approval stage based on user role and current status
-    switch (req.user.role) {
-      case 'AE':
-        if (report.status === 'DRAFT') {
-          updateData = {
-            status: action === 'approve' ? 'PENDING_SUPERVISOR' : 'REJECTED',
-            aeApprovedById: action === 'approve' ? req.user.id : null,
-            aeApprovedAt: action === 'approve' ? new Date() : null
-          };
-        }
-        break;
+    // Role permissions
+    const rolePermissions = {
+      'ae': ['draft'],
+      'supervisor': ['pending_ae'],
+      'accounting': ['pending_supervisor'],
+      'admin': ['draft', 'pending_ae', 'pending_supervisor', 'pending_accounting']
+    };
 
-      case 'SUPERVISOR':
-        if (report.status === 'PENDING_SUPERVISOR') {
-          updateData = {
-            status: action === 'approve' ? 'PENDING_ACCOUNTING' : 'REJECTED',
-            supervisorApprovedById: action === 'approve' ? req.user.id : null,
-            supervisorApprovedAt: action === 'approve' ? new Date() : null
-          };
-        }
-        break;
-
-      case 'ACCOUNTING':
-        if (report.status === 'PENDING_ACCOUNTING') {
-          updateData = {
-            status: action === 'approve' ? 'APPROVED' : 'REJECTED',
-            accountingApprovedById: action === 'approve' ? req.user.id : null,
-            accountingApprovedAt: action === 'approve' ? new Date() : null
-          };
-        }
-        break;
-
-      default:
-        return res.status(403).json({ error: 'Insufficient permissions' });
+    if (!rolePermissions[req.user.role]?.includes(report.status)) {
+      return res.status(403).json({ error: 'Not authorized to approve this report at current stage' });
     }
 
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({ error: 'Cannot approve report at this stage' });
-    }
+    report.status = statusFlow[report.status];
+    report[`${req.user.role}ApprovedBy`] = req.user.email;
+    report[`${req.user.role}ApprovedAt`] = new Date().toISOString();
 
-    const updatedReport = await prisma.report.update({
-      where: { id: reportId },
-      data: updateData,
-      include: {
-        submittedBy: { select: { id: true, name: true, email: true } },
-        aeApprovedBy: { select: { id: true, name: true, email: true } },
-        supervisorApprovedBy: { select: { id: true, name: true, email: true } },
-        accountingApprovedBy: { select: { id: true, name: true, email: true } }
-      }
-    });
-
-    res.json(updatedReport);
+    res.json(report);
   } catch (error) {
-    console.error('Approve report error:', error);
+    console.error('Error approving report:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Download report
-router.get('/:id/download', auth, async (req, res) => {
+// Reject report
+router.post('/:id/reject', auth, (req, res) => {
   try {
-    const report = await prisma.report.findUnique({
-      where: { id: parseInt(req.params.id) }
-    });
-
+    const report = reports.find(r => r.id === parseInt(req.params.id));
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    if (!report.filePath) {
-      return res.status(404).json({ error: 'Report file not found' });
-    }
+    report.status = 'rejected';
+    report.rejectedBy = req.user.email;
+    report.rejectedAt = new Date().toISOString();
+    report.rejectionReason = req.body.reason || 'No reason provided';
 
-    res.download(report.filePath, `${report.clientName}_${report.reportPeriod}.docx`);
+    res.json(report);
   } catch (error) {
-    console.error('Download report error:', error);
+    console.error('Error rejecting report:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

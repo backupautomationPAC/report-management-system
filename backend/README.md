@@ -1,213 +1,162 @@
-# Report Management System - Backend
+# Report Management System - Backend API
 
-A Node.js/Express backend API for managing client reports with Harvest time tracking integration and OpenAI-powered report generation.
+A simplified, Railway-optimized Node.js backend for the Report Management System with Harvest API and OpenAI integration.
 
-## Features
+## 🚀 Quick Deploy to Railway
 
-- 🔐 **Authentication & Authorization** - JWT-based auth with role-based access control
-- 📊 **Harvest Integration** - Fetch time entries, clients, and projects
-- 🤖 **AI Report Generation** - OpenAI-powered report content generation
-- 📄 **Document Generation** - Create Word documents from report data
-- 🔄 **Approval Workflow** - Multi-stage approval process (AE → Supervisor → Accounting)
-- 👥 **User Management** - Admin interface for managing users
-- 🛡️ **Security** - Rate limiting, CORS, Helmet security headers
-- 📁 **File Management** - Document storage and download
+This backend is optimized for Railway deployment with minimal dependencies and no Docker complications.
 
-## Quick Start
+### Prerequisites
+- Railway account
+- Harvest API credentials
+- OpenAI API key
 
-### 1. Install Dependencies
-```bash
-npm install
-```
+### 1-Click Deploy Steps
 
-### 2. Environment Setup
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-### 3. Database Setup
-```bash
-# Generate Prisma client
-npx prisma generate
-
-# Run migrations
-npx prisma migrate dev
-
-# Seed default users
-npm run db:seed
-```
-
-### 4. Start Development Server
-```bash
-npm run dev
-```
-
-The server will start at `http://localhost:3001`
-
-## Railway Deployment
-
-### Quick Deploy
-1. **Create Railway Project**
+1. **Push to GitHub**:
    ```bash
-   # Install Railway CLI
-   npm install -g @railway/cli
-
-   # Login and deploy
-   railway login
-   railway init
-   railway up
+   git init
+   git add .
+   git commit -m "Railway-optimized backend"
+   git push origin main
    ```
 
-2. **Add PostgreSQL Database**
-   - In Railway dashboard → Add → Database → PostgreSQL
-   - Railway will auto-populate DATABASE_URL
+2. **Deploy to Railway**:
+   - Go to [railway.app](https://railway.app)
+   - New Project → Deploy from GitHub repo
+   - Select your repository
+   - **Important**: Set Root Directory to the backend folder (if needed)
+   - Railway will auto-detect Node.js and use Nixpacks
 
-3. **Set Environment Variables**
+3. **Environment Variables**:
+   Add these in Railway dashboard → Variables:
    ```
-   DATABASE_URL=(auto-populated by Railway)
-   JWT_SECRET=your-secure-jwt-secret
-   HARVEST_TOKEN=your-harvest-token
-   HARVEST_ACCOUNT_ID=your-harvest-account-id
-   OPENAI_API_KEY=your-openai-key
-   FRONTEND_URL=https://your-frontend.vercel.app
-   ```
-
-4. **Initialize Database**
-   ```bash
-   railway run npx prisma migrate deploy
-   railway run npm run db:seed
+   JWT_SECRET=your-super-secret-jwt-key-here
+   HARVEST_TOKEN=your_harvest_api_token
+   HARVEST_ACCOUNT_ID=your_harvest_account_id
+   OPENAI_API_KEY=your_openai_api_key
+   NODE_ENV=production
    ```
 
-## API Endpoints
+## ✅ What's Optimized for Railway
+
+- ✅ **No Dockerfile** - Uses Railway's Nixpacks auto-detection
+- ✅ **Minimal Dependencies** - Only essential packages
+- ✅ **Node Version Pinned** - `.nvmrc` specifies exact version
+- ✅ **Railway Config** - `railway.json` for optimal settings  
+- ✅ **Simple Structure** - Clean, straightforward organization
+- ✅ **In-Memory Storage** - No database setup required for testing
+
+## 📁 Project Structure
+
+```
+├── server.js              # Main application entry point
+├── package.json           # Dependencies and scripts
+├── .nvmrc                 # Node.js version
+├── railway.json           # Railway configuration
+├── .env.example           # Environment variables template
+├── routes/
+│   ├── auth.js           # Authentication endpoints
+│   ├── reports.js        # Report management
+│   ├── users.js          # User management
+│   └── harvest.js        # Harvest API integration
+├── middleware/
+│   └── auth.js           # JWT authentication middleware
+├── services/
+│   ├── harvest.js        # Harvest API service
+│   └── openai.js         # OpenAI integration service
+└── uploads/              # File upload directory
+```
+
+## 🔑 Default Users
+
+After deployment, you can login with these default accounts:
+
+- **Admin**: admin@tegpr.com / admin123
+- **Account Executive**: ae@tegpr.com / ae123  
+- **Supervisor**: supervisor@tegpr.com / super123
+- **Accounting**: accounting@tegpr.com / acc123
+
+## 🌐 API Endpoints
 
 ### Authentication
 - `POST /api/auth/login` - User login
 - `GET /api/auth/me` - Get current user
-- `PUT /api/auth/change-password` - Change password
 
 ### Reports
-- `GET /api/reports` - List all reports
+- `GET /api/reports` - List reports
 - `GET /api/reports/:id` - Get single report
 - `POST /api/reports` - Create new report
-- `POST /api/reports/:id/approve` - Approve/reject report
-- `GET /api/reports/:id/download` - Download report file
+- `POST /api/reports/:id/approve` - Approve report
+- `POST /api/reports/:id/reject` - Reject report
 
-### Users (Admin only)
-- `GET /api/users` - List all users
-- `POST /api/users` - Create user
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
+### Users
+- `GET /api/users` - List users (admin only)
+- `POST /api/users` - Create user (admin only)
+- `PUT /api/users/:id` - Update user (admin only)
+- `DELETE /api/users/:id` - Delete user (admin only)
 
 ### Harvest Integration
 - `GET /api/harvest/time-entries` - Get time entries
 - `GET /api/harvest/clients` - Get clients
 - `GET /api/harvest/projects` - Get projects
 
-## Default Users
+### System
+- `GET /health` - Health check endpoint
+- `GET /` - API information
 
-After seeding, these accounts are available:
+## 🔧 Development
 
-- **Admin**: admin@tegpr.com / admin123
-- **AE**: ae@tegpr.com / ae123
-- **Supervisor**: supervisor@tegpr.com / super123
-- **Accounting**: accounting@tegpr.com / acc123
+```bash
+# Install dependencies
+npm install
 
-## Project Structure
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your actual values
 
-```
-backend/
-├── prisma/
-│   └── schema.prisma      # Database schema
-├── routes/
-│   ├── auth.js           # Authentication routes
-│   ├── reports.js        # Report management routes
-│   ├── users.js          # User management routes
-│   └── harvest.js        # Harvest API routes
-├── services/
-│   ├── harvest.js        # Harvest API integration
-│   ├── openai.js         # OpenAI integration
-│   └── document.js       # Document generation
-├── middleware/
-│   └── auth.js           # Authentication middleware
-├── uploads/              # Generated files storage
-├── server.js             # Main application file
-├── seed.js               # Database seeding
-└── package.json          # Dependencies and scripts
+# Start development server
+npm run dev
 ```
 
-## Development Scripts
+## 🚨 Troubleshooting Railway Deployment
 
-- `npm start` - Start production server
-- `npm run dev` - Start development server with nodemon
-- `npm run build` - Generate Prisma client
-- `npm run db:migrate` - Run database migrations
-- `npm run db:seed` - Seed database with default users
-- `npm run db:studio` - Open Prisma Studio
+If you encounter issues:
 
-## Environment Variables
+1. **Check Build Logs**: Railway dashboard → Deployments → View logs
+2. **Verify Environment Variables**: All required vars are set
+3. **Node Version**: Ensure `.nvmrc` matches Railway's supported versions
+4. **Dependencies**: All packages in package.json are available on npm
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `JWT_SECRET` | Secret for JWT token signing | Yes |
-| `HARVEST_TOKEN` | Harvest Personal Access Token | Yes |
-| `HARVEST_ACCOUNT_ID` | Harvest Account ID | Yes |
-| `OPENAI_API_KEY` | OpenAI API Key | Yes |
-| `FRONTEND_URL` | Frontend URL for CORS | No |
-| `PORT` | Server port (default: 3001) | No |
+## 📊 Monitoring
 
-## Troubleshooting
+- Health check: `GET /health`
+- Railway provides built-in monitoring and logs
+- All errors are logged to console for Railway's log aggregation
 
-### Common Issues
+## 🔒 Security Features
 
-1. **npm install fails**
-   - Ensure Node.js 18+ is installed
-   - Clear npm cache: `npm cache clean --force`
+- JWT authentication
+- Password hashing with bcryptjs
+- Rate limiting
+- CORS protection
+- Helmet security headers
+- Input validation
 
-2. **Database connection fails**
-   - Check DATABASE_URL format
-   - Ensure PostgreSQL is running
+## 📈 Next Steps
 
-3. **Prisma errors**
-   - Regenerate client: `npx prisma generate`
-   - Reset database: `npx prisma migrate reset`
+1. **Add Database**: Replace in-memory storage with PostgreSQL
+2. **File Storage**: Implement cloud storage for generated reports
+3. **Email Notifications**: Add email alerts for report approvals
+4. **Advanced Harvest Integration**: Implement more Harvest API features
+5. **Report Templates**: Add customizable report templates
 
-4. **API key errors**
-   - Verify all API keys are set in environment variables
-   - Check API key permissions and quotas
+## 🆘 Support
 
-## Security
+- Check Railway documentation: [docs.railway.app](https://docs.railway.app)
+- Review logs in Railway dashboard
+- Verify all environment variables are correctly set
 
-- Passwords are hashed with bcrypt
-- JWT tokens expire in 24 hours
-- Rate limiting: 100 requests per 15 minutes
-- CORS configured for frontend domain
-- Helmet.js for security headers
-- Input validation with express-validator
+---
 
-## Monitoring
-
-Health check endpoint available at `/health` returns:
-```json
-{
-  "status": "OK", 
-  "timestamp": "2024-01-01T00:00:00.000Z",
-  "environment": "production"
-}
-```
-
-## Updates
-
-To update the application:
-1. Pull latest changes
-2. Install dependencies: `npm install`
-3. Run migrations: `npx prisma migrate deploy`
-4. Restart server
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review Railway/Vercel deployment logs
-3. Ensure all environment variables are set correctly
+**Built for Railway** ⚡ **Optimized for Performance** 🚀 **Ready to Scale** 📈

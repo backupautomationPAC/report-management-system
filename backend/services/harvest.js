@@ -7,7 +7,7 @@ class HarvestService {
     this.accountId = process.env.HARVEST_ACCOUNT_ID;
 
     if (!this.token || !this.accountId) {
-      console.warn('Harvest API credentials not configured');
+      console.warn('Harvest credentials not configured');
     }
   }
 
@@ -30,24 +30,45 @@ class HarvestService {
         to: endDate
       };
 
-      if (clientName) {
-        // First get client ID by name
-        const clients = await this.getClients();
-        const client = clients.find(c => c.name.toLowerCase().includes(clientName.toLowerCase()));
-        if (client) {
-          params.client_id = client.id;
-        }
-      }
-
       const response = await axios.get(`${this.baseURL}/time_entries`, {
         headers: this.getHeaders(),
         params
       });
 
-      return response.data.time_entries || [];
+      let timeEntries = response.data.time_entries || [];
+
+      // Filter by client name if provided
+      if (clientName) {
+        timeEntries = timeEntries.filter(entry => 
+          entry.client && entry.client.name.toLowerCase().includes(clientName.toLowerCase())
+        );
+      }
+
+      return timeEntries.map(entry => ({
+        id: entry.id,
+        spentDate: entry.spent_date,
+        hours: entry.hours,
+        notes: entry.notes || '',
+        client: entry.client ? {
+          id: entry.client.id,
+          name: entry.client.name
+        } : null,
+        project: entry.project ? {
+          id: entry.project.id,
+          name: entry.project.name
+        } : null,
+        task: entry.task ? {
+          id: entry.task.id,
+          name: entry.task.name
+        } : null,
+        user: entry.user ? {
+          id: entry.user.id,
+          name: entry.user.name
+        } : null
+      }));
     } catch (error) {
-      console.error('Harvest API error:', error.response?.data || error.message);
-      throw new Error('Failed to fetch time entries from Harvest');
+      console.error('Harvest API error:', error.message);
+      throw new Error(`Failed to fetch time entries: ${error.message}`);
     }
   }
 
@@ -61,10 +82,16 @@ class HarvestService {
         headers: this.getHeaders()
       });
 
-      return response.data.clients || [];
+      const clients = response.data.clients || [];
+
+      return clients.map(client => ({
+        id: client.id,
+        name: client.name,
+        active: client.is_active
+      }));
     } catch (error) {
-      console.error('Harvest API error:', error.response?.data || error.message);
-      throw new Error('Failed to fetch clients from Harvest');
+      console.error('Harvest API error:', error.message);
+      throw new Error(`Failed to fetch clients: ${error.message}`);
     }
   }
 
@@ -74,64 +101,30 @@ class HarvestService {
         throw new Error('Harvest API credentials not configured');
       }
 
-      const params = {};
-      if (clientId) {
-        params.client_id = clientId;
-      }
+      const params = clientId ? { client_id: clientId } : {};
 
       const response = await axios.get(`${this.baseURL}/projects`, {
         headers: this.getHeaders(),
         params
       });
 
-      return response.data.projects || [];
+      const projects = response.data.projects || [];
+
+      return projects.map(project => ({
+        id: project.id,
+        name: project.name,
+        code: project.code,
+        active: project.is_active,
+        client: project.client ? {
+          id: project.client.id,
+          name: project.client.name
+        } : null
+      }));
     } catch (error) {
-      console.error('Harvest API error:', error.response?.data || error.message);
-      throw new Error('Failed to fetch projects from Harvest');
+      console.error('Harvest API error:', error.message);
+      throw new Error(`Failed to fetch projects: ${error.message}`);
     }
-  }
-
-  formatTimeEntriesForReport(timeEntries) {
-    if (!Array.isArray(timeEntries)) {
-      return [];
-    }
-
-    return timeEntries.map(entry => ({
-      date: entry.spent_date,
-      project: entry.project?.name || 'Unknown Project',
-      task: entry.task?.name || 'Unknown Task',
-      hours: entry.hours || 0,
-      notes: entry.notes || '',
-      user: entry.user?.name || 'Unknown User'
-    }));
-  }
-
-  groupTimeEntriesByProject(timeEntries) {
-    const grouped = {};
-
-    timeEntries.forEach(entry => {
-      const projectName = entry.project?.name || 'Unknown Project';
-
-      if (!grouped[projectName]) {
-        grouped[projectName] = {
-          totalHours: 0,
-          tasks: {},
-          entries: []
-        };
-      }
-
-      grouped[projectName].totalHours += entry.hours || 0;
-      grouped[projectName].entries.push(entry);
-
-      const taskName = entry.task?.name || 'Unknown Task';
-      if (!grouped[projectName].tasks[taskName]) {
-        grouped[projectName].tasks[taskName] = 0;
-      }
-      grouped[projectName].tasks[taskName] += entry.hours || 0;
-    });
-
-    return grouped;
   }
 }
 
-module.exports = HarvestService;
+module.exports = new HarvestService();

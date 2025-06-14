@@ -4,7 +4,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables
+# Environment files
 .env
 .env.local
 .env.development.local
@@ -23,21 +23,31 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+*.lcov
 
-# NYC test coverage
-.nyc_output
+# Dependency directories
+node_modules/
+jspm_packages/
 
-# Build outputs
-dist/
-build/
+# Optional npm cache directory
+.npm
 
-# Prisma
-prisma/migrations/
-.prisma/
+# Optional REPL history
+.node_repl_history
 
-# Uploads
-uploads/
-temp/
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Uploaded files
+uploads/*
+!uploads/.gitkeep
 
 # OS generated files
 .DS_Store
@@ -48,11 +58,13 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# IDE
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Railway
-.railway/
+# Temporary files
+*.tmp
+*.temp
