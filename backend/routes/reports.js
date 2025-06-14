@@ -1,13 +1,13 @@
 const express = require('express');
-const { Report } = require('../models');
-const authMiddleware = require('../middleware/auth');
+const db = require('../data/store');
+const authMiddleware = require('./auth-middleware');
 
 const router = express.Router();
 
 // Get all reports
 router.get('/', authMiddleware, (req, res) => {
   try {
-    const reports = Report.getAll();
+    const reports = db.getAllReports();
     res.json({ reports });
   } catch (error) {
     console.error('Get reports error:', error);
@@ -18,7 +18,7 @@ router.get('/', authMiddleware, (req, res) => {
 // Create new report
 router.post('/', authMiddleware, (req, res) => {
   try {
-    const { client_name, report_period, start_date, end_date } = req.body;
+    const { client_name, report_period, start_date, end_date, content } = req.body;
 
     if (!client_name || !report_period) {
       return res.status(400).json({ message: 'Client name and report period are required' });
@@ -29,12 +29,12 @@ router.post('/', authMiddleware, (req, res) => {
       report_period,
       start_date,
       end_date,
+      content: content || `Sample report content for ${client_name}`,
       submitted_by: req.user.email,
-      status: 'draft',
-      content: 'Sample report content generated for ' + client_name
+      status: 'draft'
     };
 
-    const newReport = Report.create(reportData);
+    const newReport = db.createReport(reportData);
     res.status(201).json(newReport);
   } catch (error) {
     console.error('Create report error:', error);
@@ -45,7 +45,7 @@ router.post('/', authMiddleware, (req, res) => {
 // Get specific report
 router.get('/:id', authMiddleware, (req, res) => {
   try {
-    const report = Report.findById(req.params.id);
+    const report = db.findReportById(req.params.id);
 
     if (!report) {
       return res.status(404).json({ message: 'Report not found' });
@@ -58,11 +58,11 @@ router.get('/:id', authMiddleware, (req, res) => {
   }
 });
 
-// Update report status (approve/reject)
+// Update report status
 router.patch('/:id/status', authMiddleware, (req, res) => {
   try {
     const { status } = req.body;
-    const report = Report.findById(req.params.id);
+    const report = db.findReportById(req.params.id);
 
     if (!report) {
       return res.status(404).json({ message: 'Report not found' });
@@ -73,12 +73,13 @@ router.patch('/:id/status', authMiddleware, (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const updatedReport = Report.update(req.params.id, { 
+    const updateData = { 
       status,
       [`${req.user.role}_approved_by`]: req.user.email,
       [`${req.user.role}_approved_at`]: new Date().toISOString()
-    });
+    };
 
+    const updatedReport = db.updateReport(req.params.id, updateData);
     res.json(updatedReport);
   } catch (error) {
     console.error('Update report error:', error);

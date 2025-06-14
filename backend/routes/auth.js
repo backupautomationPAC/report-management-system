@@ -1,10 +1,9 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const db = require('../data/store');
 
 const router = express.Router();
 
-// Login endpoint
+// Login endpoint - no external JWT library needed
 router.post('/login', (req, res) => {
   try {
     const { email, password } = req.body;
@@ -13,24 +12,22 @@ router.post('/login', (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = User.findByEmail(email);
+    // Find user
+    const user = db.findUserByEmail(email);
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const isValidPassword = User.comparePassword(password, user.password);
-    if (!isValidPassword) {
+    // Verify password
+    if (!db.verifyPassword(password, user.password)) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback_secret',
-      { expiresIn: '24h' }
-    );
+    // Create session
+    const sessionId = db.createSession(user.id);
 
     res.json({
-      token,
+      sessionId,
       user: {
         id: user.id,
         email: user.email,
@@ -47,15 +44,18 @@ router.post('/login', (req, res) => {
 // Get current user
 router.get('/me', (req, res) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
 
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
+    if (!sessionId) {
+      return res.status(401).json({ message: 'No session provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-    const user = User.findById(decoded.id);
+    const session = db.getSession(sessionId);
+    if (!session) {
+      return res.status(401).json({ message: 'Invalid session' });
+    }
 
+    const user = db.findUserById(session.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -68,7 +68,23 @@ router.get('/me', (req, res) => {
     });
   } catch (error) {
     console.error('Get user error:', error);
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Logout
+router.post('/logout', (req, res) => {
+  try {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
+
+    if (sessionId) {
+      db.deleteSession(sessionId);
+    }
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

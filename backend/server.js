@@ -1,66 +1,64 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
-
+// Ultra-simple middleware setup
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    message: 'Ultra-simple backend is running'
   });
 });
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'Report Management API is running',
+    message: 'Ultra-Simple Report Management API',
     version: '1.0.0',
     endpoints: {
       health: '/health',
       auth: '/api/auth',
-      reports: '/api/reports',
-      users: '/api/users',
-      harvest: '/api/harvest'
-    }
+      reports: '/api/reports',  
+      users: '/api/users'
+    },
+    features: [
+      'Express + CORS + dotenv only',
+      'Built-in Node.js crypto for auth',
+      'In-memory data store',
+      'Session-based authentication',
+      'No external auth libraries'
+    ]
   });
 });
 
-// API Routes
+// Load routes (with error handling)
 try {
   const authRoutes = require('./routes/auth');
   const reportRoutes = require('./routes/reports');
   const userRoutes = require('./routes/users');
-  const harvestRoutes = require('./routes/harvest');
 
   app.use('/api/auth', authRoutes);
   app.use('/api/reports', reportRoutes);
   app.use('/api/users', userRoutes);
-  app.use('/api/harvest', harvestRoutes);
+
+  console.log('✅ All routes loaded successfully');
 } catch (error) {
-  console.error('Error loading routes:', error);
+  console.error('❌ Error loading routes:', error.message);
   process.exit(1);
 }
 
-// Error handling middleware
+// Simple error handling
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('Server error:', err);
   res.status(500).json({ 
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
@@ -71,24 +69,30 @@ app.use((err, req, res, next) => {
 app.use('*', (req, res) => {
   res.status(404).json({ 
     message: 'Route not found',
-    availableRoutes: ['/health', '/api/auth', '/api/reports', '/api/users', '/api/harvest']
+    availableRoutes: ['/health', '/api/auth', '/api/reports', '/api/users']
   });
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on port ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Ultra-simple backend running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  console.log(`💚 Health check: http://localhost:${PORT}/health`);
+  console.log(`📦 Dependencies: express, cors, dotenv (3 packages only)`);
+  console.log(`🔐 Auth: Session-based with built-in crypto`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully');
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
