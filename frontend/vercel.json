@@ -1,0 +1,10 @@
+{
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://report-management-system-production.up.railway.app"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://report-management-system-production.up.railway.app"
+  }
+}
