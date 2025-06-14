@@ -1,81 +1,27 @@
-# Report Management System - Backend API
+# Working Backend for Report Management System
 
-A simplified, Railway-optimized Node.js backend for the Report Management System with Harvest API and OpenAI integration.
+## 🚀 Features
 
-## 🚀 Quick Deploy to Railway
+- ✅ **Simple Express Server** - Lightweight and fast
+- ✅ **Working Authentication** - JWT-based login system
+- ✅ **User Management** - Role-based access control
+- ✅ **Report Management** - Create, view, approve reports
+- ✅ **Mock Harvest Integration** - Sample time tracking data
+- ✅ **In-Memory Storage** - No database setup required
+- ✅ **CORS Enabled** - Ready for frontend integration
+- ✅ **Error Handling** - Proper error responses
 
-This backend is optimized for Railway deployment with minimal dependencies and no Docker complications.
+## 🛠️ Installation
 
-### Prerequisites
-- Railway account
-- Harvest API credentials
-- OpenAI API key
-
-### 1-Click Deploy Steps
-
-1. **Push to GitHub**:
+1. **Extract the backend files**
+2. **Install dependencies:**
    ```bash
-   git init
-   git add .
-   git commit -m "Railway-optimized backend"
-   git push origin main
+   npm install
    ```
-
-2. **Deploy to Railway**:
-   - Go to [railway.app](https://railway.app)
-   - New Project → Deploy from GitHub repo
-   - Select your repository
-   - **Important**: Set Root Directory to the backend folder (if needed)
-   - Railway will auto-detect Node.js and use Nixpacks
-
-3. **Environment Variables**:
-   Add these in Railway dashboard → Variables:
+3. **Start the server:**
+   ```bash
+   npm start
    ```
-   JWT_SECRET=your-super-secret-jwt-key-here
-   HARVEST_TOKEN=your_harvest_api_token
-   HARVEST_ACCOUNT_ID=your_harvest_account_id
-   OPENAI_API_KEY=your_openai_api_key
-   NODE_ENV=production
-   ```
-
-## ✅ What's Optimized for Railway
-
-- ✅ **No Dockerfile** - Uses Railway's Nixpacks auto-detection
-- ✅ **Minimal Dependencies** - Only essential packages
-- ✅ **Node Version Pinned** - `.nvmrc` specifies exact version
-- ✅ **Railway Config** - `railway.json` for optimal settings  
-- ✅ **Simple Structure** - Clean, straightforward organization
-- ✅ **In-Memory Storage** - No database setup required for testing
-
-## 📁 Project Structure
-
-```
-├── server.js              # Main application entry point
-├── package.json           # Dependencies and scripts
-├── .nvmrc                 # Node.js version
-├── railway.json           # Railway configuration
-├── .env.example           # Environment variables template
-├── routes/
-│   ├── auth.js           # Authentication endpoints
-│   ├── reports.js        # Report management
-│   ├── users.js          # User management
-│   └── harvest.js        # Harvest API integration
-├── middleware/
-│   └── auth.js           # JWT authentication middleware
-├── services/
-│   ├── harvest.js        # Harvest API service
-│   └── openai.js         # OpenAI integration service
-└── uploads/              # File upload directory
-```
-
-## 🔑 Default Users
-
-After deployment, you can login with these default accounts:
-
-- **Admin**: admin@tegpr.com / admin123
-- **Account Executive**: ae@tegpr.com / ae123  
-- **Supervisor**: supervisor@tegpr.com / super123
-- **Accounting**: accounting@tegpr.com / acc123
 
 ## 🌐 API Endpoints
 
@@ -84,79 +30,142 @@ After deployment, you can login with these default accounts:
 - `GET /api/auth/me` - Get current user
 
 ### Reports
-- `GET /api/reports` - List reports
-- `GET /api/reports/:id` - Get single report
+- `GET /api/reports` - Get all reports
 - `POST /api/reports` - Create new report
-- `POST /api/reports/:id/approve` - Approve report
-- `POST /api/reports/:id/reject` - Reject report
+- `GET /api/reports/:id` - Get specific report
+- `PATCH /api/reports/:id/status` - Update report status
 
-### Users
-- `GET /api/users` - List users (admin only)
-- `POST /api/users` - Create user (admin only)
-- `PUT /api/users/:id` - Update user (admin only)
-- `DELETE /api/users/:id` - Delete user (admin only)
+### Users (Admin only)
+- `GET /api/users` - Get all users
+- `POST /api/users` - Create new user
 
-### Harvest Integration
+### Harvest (Mock Data)
 - `GET /api/harvest/time-entries` - Get time entries
 - `GET /api/harvest/clients` - Get clients
 - `GET /api/harvest/projects` - Get projects
 
-### System
-- `GET /health` - Health check endpoint
-- `GET /` - API information
+### Health Check
+- `GET /health` - Server health status
 
-## 🔧 Development
+## 👥 Default Users
 
-```bash
-# Install dependencies
-npm install
+| Email | Password | Role |
+|-------|----------|------|
+| admin@tegpr.com | admin123 | admin |
+| ae@tegpr.com | ae123 | ae |
+| supervisor@tegpr.com | super123 | supervisor |
+| accounting@tegpr.com | acc123 | accounting |
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your actual values
+## 🔧 Environment Variables
 
-# Start development server
-npm run dev
+Create a `.env` file:
+
+```env
+PORT=3000
+NODE_ENV=production
+JWT_SECRET=your_jwt_secret_here_123456789
+HARVEST_TOKEN=your_harvest_token_here
+HARVEST_ACCOUNT_ID=your_harvest_account_id
+OPENAI_API_KEY=your_openai_api_key_here
+FRONTEND_URL=http://localhost:3000
 ```
 
-## 🚨 Troubleshooting Railway Deployment
+## 🚀 Railway Deployment
 
-If you encounter issues:
+1. **Push to GitHub**
+2. **Connect Railway to your repo**
+3. **Set Root Directory to backend folder**
+4. **Add environment variables in Railway**
+5. **Deploy!**
 
-1. **Check Build Logs**: Railway dashboard → Deployments → View logs
-2. **Verify Environment Variables**: All required vars are set
-3. **Node Version**: Ensure `.nvmrc` matches Railway's supported versions
-4. **Dependencies**: All packages in package.json are available on npm
+## ✅ Testing
 
-## 📊 Monitoring
+Test the API with curl:
 
-- Health check: `GET /health`
-- Railway provides built-in monitoring and logs
-- All errors are logged to console for Railway's log aggregation
+```bash
+# Health check
+curl http://localhost:3000/health
+
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@tegpr.com","password":"admin123"}'
+
+# Get reports (with token)
+curl http://localhost:3000/api/reports \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
 
 ## 🔒 Security Features
 
-- JWT authentication
-- Password hashing with bcryptjs
-- Rate limiting
-- CORS protection
-- Helmet security headers
+- JWT token authentication
+- Password hashing with bcrypt
+- Role-based access control
 - Input validation
+- CORS protection
+- Error handling without sensitive data exposure
 
-## 📈 Next Steps
+## 📁 Project Structure
 
-1. **Add Database**: Replace in-memory storage with PostgreSQL
-2. **File Storage**: Implement cloud storage for generated reports
-3. **Email Notifications**: Add email alerts for report approvals
-4. **Advanced Harvest Integration**: Implement more Harvest API features
-5. **Report Templates**: Add customizable report templates
+```
+working-backend/
+├── server.js              # Main server file
+├── package.json           # Dependencies
+├── .env.example          # Environment variables template
+├── .nvmrc                # Node version
+├── middleware/
+│   └── auth.js           # Authentication middleware
+├── models/
+│   └── index.js          # Data models (in-memory)
+├── routes/
+│   ├── auth.js           # Authentication routes
+│   ├── reports.js        # Report management routes
+│   ├── users.js          # User management routes
+│   └── harvest.js        # Harvest API routes (mock)
+└── uploads/              # File upload directory
+```
 
-## 🆘 Support
+## 🎯 Next Steps
 
-- Check Railway documentation: [docs.railway.app](https://docs.railway.app)
-- Review logs in Railway dashboard
-- Verify all environment variables are correctly set
+1. **Deploy to Railway** - This backend is ready to deploy
+2. **Connect Frontend** - Use the API endpoints in your frontend
+3. **Add Real Database** - Replace in-memory storage with PostgreSQL
+4. **Add Real Harvest API** - Replace mock data with actual API calls
+5. **Add OpenAI Integration** - Generate real reports with AI
+
+## 🆘 Troubleshooting
+
+### Common Issues:
+
+1. **Port already in use**
+   ```bash
+   lsof -ti:3000 | xargs kill -9
+   ```
+
+2. **Module not found**
+   ```bash
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+3. **JWT errors**
+   - Make sure JWT_SECRET is set in environment variables
+
+### Railway Deployment Issues:
+
+1. **Build fails** - Check that all dependencies are in package.json
+2. **App crashes** - Check Railway logs for specific errors
+3. **Routes not working** - Ensure Root Directory is set correctly
+
+## 📈 Monitoring
+
+Check these endpoints to verify everything is working:
+
+- `/health` - Server status
+- `/` - API information
+- `/api/auth/login` - Authentication working
+- `/api/reports` - Database/storage working
 
 ---
 
-**Built for Railway** ⚡ **Optimized for Performance** 🚀 **Ready to Scale** 📈
+**This backend is tested and ready to deploy! 🚀**

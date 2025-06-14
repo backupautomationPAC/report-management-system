@@ -1,70 +1,31 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
+const { User } = require('../models');
+
 const router = express.Router();
 
-// In-memory user store (replace with database in production)
-const users = [
-  {
-    id: 1,
-    email: 'admin@tegpr.com',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: admin123
-    name: 'Admin User',
-    role: 'admin'
-  },
-  {
-    id: 2,
-    email: 'ae@tegpr.com',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: ae123
-    name: 'Account Executive',
-    role: 'ae'
-  },
-  {
-    id: 3,
-    email: 'supervisor@tegpr.com',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: super123
-    name: 'Supervisor',
-    role: 'supervisor'
-  },
-  {
-    id: 4,
-    email: 'accounting@tegpr.com',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password: acc123
-    name: 'Accounting',
-    role: 'accounting'
-  }
-];
-
-// Login route
-router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 })
-], async (req, res) => {
+// Login endpoint
+router.post('/login', (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, password } = req.body;
 
-    // Find user
-    const user = users.find(u => u.email === email);
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const user = User.findByEmail(email);
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    const isValidPassword = User.comparePassword(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate JWT
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback-secret-key',
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'fallback_secret',
       { expiresIn: '24h' }
     );
 
@@ -73,29 +34,42 @@ router.post('/login', [
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
-        role: user.role
+        role: user.role,
+        name: user.name
       }
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Get current user
-router.get('/me', require('../middleware/auth'), (req, res) => {
-  const user = users.find(u => u.id === req.user.userId);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+router.get('/me', (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
 
-  res.json({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role
-  });
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    const user = User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(401).json({ message: 'Invalid token' });
+  }
 });
 
 module.exports = router;
