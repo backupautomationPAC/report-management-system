@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5a6fd8;
+        }
+        
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .dashboard {
+            display: none;
+        }
+        
+        .dashboard.show {
+            display: block;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            padding: 0.5rem 1rem;
+            width: auto;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Form -->
+    <div class="container" id="loginForm">
+        <h1>Report Management System</h1>
+        <form id="login">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="admin@tegpr.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="admin123" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="container dashboard" id="dashboard">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalReports">0</div>
+                <div class="stat-label">Total Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingReports">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="approvedReports">0</div>
+                <div class="stat-label">Approved</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <h3>Create New Report</h3>
+            <form id="createReport">
+                <div class="form-group">
+                    <label for="clientName">Client Name:</label>
+                    <input type="text" id="clientName" value="BESH RESTAURANT GROUP" required>
+                </div>
+                <div class="form-group">
+                    <label for="reportPeriod">Report Period:</label>
+                    <input type="text" id="reportPeriod" value="January 2024" required>
+                </div>
+                <button type="submit">Create Report</button>
+            </form>
+        </div>
+        
+        <div id="dashboardMessage"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://report-management-system-production.up.railway.app';
+        let sessionId = localStorage.getItem('sessionId');
+
+        // Check if already logged in
+        if (sessionId) {
+            showDashboard();
+        }
+
+        // Login form handler
+        document.getElementById('login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sessionId = data.sessionId;
+                    localStorage.setItem('sessionId', sessionId);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    showMessage('Login successful!', 'success');
+                    setTimeout(showDashboard, 1000);
+                } else {
+                    showMessage(data.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Connection error: ' + error.message, 'error');
+            }
+        });
+
+        // Create report form handler
+        document.getElementById('createReport').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const clientName = document.getElementById('clientName').value;
+            const reportPeriod = document.getElementById('reportPeriod').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/reports`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionId}`
+                    },
+                    body: JSON.stringify({
+                        client_name: clientName,
+                        report_period: reportPeriod,
+                        start_date: new Date().toISOString().split('T')[0],
+                        end_date: new Date().toISOString().split('T')[0]
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showDashboardMessage('Report created successfully!', 'success');
+                    loadReports();
+                } else {
+                    showDashboardMessage(data.message || 'Failed to create report', 'error');
+                }
+            } catch (error) {
+                showDashboardMessage('Connection error: ' + error.message, 'error');
+            }
+        });
+
+        function showDashboard() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('dashboard').classList.add('show');
+            loadReports();
+        }
+
+        function logout() {
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('user');
+            sessionId = null;
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('dashboard').classList.remove('show');
+            showMessage('Logged out successfully', 'success');
+        }
+
+        async function loadReports() {
+            try {
+                const response = await fetch(`${API_URL}/api/reports`, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionId}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const reports = data.reports || [];
+                    document.getElementById('totalReports').textContent = reports.length;
+                    document.getElementById('pendingReports').textContent = 
+                        reports.filter(r => r.status === 'draft' || r.status.includes('pending')).length;
+                    document.getElementById('approvedReports').textContent = 
+                        reports.filter(r => r.status === 'approved').length;
+                }
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+        }
+
+        function showDashboardMessage(text, type) {
+            const messageDiv = document.getElementById('dashboardMessage');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+        }
+    </script>
+</body>
+</html>
