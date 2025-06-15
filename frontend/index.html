@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar-active { background-color: #3b82f6; color: white; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-approved { background-color: #d1fae5; color: #065f46; }
+        .status-rejected { background-color: #fee2e2; color: #991b1b; }
+        .status-draft { background-color: #e5e7eb; color: #374151; }
+        .approval-step { padding: 0.5rem 1rem; border-radius: 0.25rem; margin: 0.25rem 0; }
+        .approval-pending { background-color: #fef3c7; color: #92400e; }
+        .approval-completed { background-color: #d1fae5; color: #065f46; }
+        .approval-waiting { background-color: #e5e7eb; color: #6b7280; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
+        <div class="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-2xl">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-gray-900">Report Management System</h2>
+                <p class="mt-2 text-gray-600">Sign in to access your dashboard</p>
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-700"><strong>Demo credentials:</strong></p>
+                    <p class="text-sm text-blue-600">Email: admin@tegpr.com | Password: admin123</p>
+                </div>
+            </div>
+            <form id="loginForm" class="mt-8 space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" name="email" value="admin@tegpr.com" required 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" name="password" value="admin123" required 
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Sign in
+                </button>
+            </form>
+            <div id="loginMessage" class="text-center text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardScreen" class="hidden min-h-screen bg-gray-100">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-gray-900">TEG Report Management</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-700">Welcome back, <span id="userName">User</span></span>
+                        <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex">
+            <!-- Sidebar -->
+            <nav class="w-64 bg-white shadow-lg min-h-screen">
+                <div class="p-4">
+                    <div class="space-y-2">
+                        <a href="#" onclick="showView('dashboard')" id="nav-dashboard" class="sidebar-active flex items-center px-4 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
+                        </a>
+                        <a href="#" onclick="showView('reports')" id="nav-reports" class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
+                            <i class="fas fa-file-alt mr-3"></i>Reports
+                        </a>
+                        <a href="#" onclick="showView('generate')" id="nav-generate" class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
+                            <i class="fas fa-plus-circle mr-3"></i>Generate Reports
+                        </a>
+                        <a href="#" onclick="showView('users')" id="nav-users" class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
+                            <i class="fas fa-users mr-3"></i>Users
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-6">
+                <!-- Dashboard View -->
+                <div id="dashboardView" class="view">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                        <p class="text-gray-600">Overview of your report management system</p>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clock text-2xl text-yellow-600"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Pending Review</dt>
+                                            <dd class="text-lg font-medium text-gray-900" id="pendingCount">0</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Approved Reports</dt>
+                                            <dd class="text-lg font-medium text-gray-900" id="approvedCount">0</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-times-circle text-2xl text-red-600"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Rejected Reports</dt>
+                                            <dd class="text-lg font-medium text-gray-900" id="rejectedCount">0</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-file-alt text-2xl text-blue-600"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Total Reports</dt>
+                                            <dd class="text-lg font-medium text-gray-900" id="totalCount">0</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Reports -->
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Reports</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentReportsTable" class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">Loading reports...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports View -->
+                <div id="reportsView" class="view hidden">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Reports</h2>
+                        <p class="text-gray-600">Manage and review client reports</p>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="bg-white shadow rounded-lg mb-6">
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Status Filter</label>
+                                    <select id="statusFilter" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Status</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="pending_ae">Pending AE</option>
+                                        <option value="pending_supervisor">Pending Supervisor</option>
+                                        <option value="pending_accounting">Pending Accounting</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Client Filter</label>
+                                    <select id="clientFilter" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">All Clients</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button onclick="loadReports()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                                        <i class="fas fa-search mr-2"></i>Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reports Table -->
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reportsTable" class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">Loading reports...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Reports View -->
+                <div id="generateView" class="view hidden">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Generate Reports</h2>
+                        <p class="text-gray-600">Create new client reports from Harvest data</p>
+                    </div>
+
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <form id="generateForm" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Client Name</label>
+                                        <input type="text" id="clientName" value="BESH RESTAURANT GROUP" required 
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Report Period</label>
+                                        <input type="text" id="reportPeriod" value="January 2024" required 
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                                        <input type="date" id="startDate" required 
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">End Date</label>
+                                        <input type="date" id="endDate" required 
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                                        <i class="fas fa-plus mr-2"></i>Generate Report
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="generateMessage" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users View -->
+                <div id="usersView" class="view hidden">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Users</h2>
+                        <p class="text-gray-600">Manage system users and permissions</p>
+                    </div>
+
+                    <div class="bg-white shadow rounded-lg">
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTable" class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">Loading users...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://report-management-system-production.up.railway.app';
+        let sessionId = localStorage.getItem('sessionId');
+        let currentUser = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sessionId) {
+                checkSession();
+            }
+            setupEventListeners();
+            setDefaultDates();
+        });
+
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Generate form
+            document.getElementById('generateForm').addEventListener('submit', handleGenerate);
+            
+            // Filters
+            document.getElementById('statusFilter').addEventListener('change', loadReports);
+            document.getElementById('clientFilter').addEventListener('change', loadReports);
+        }
+
+        function setDefaultDates() {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            document.getElementById('startDate').value = startOfMonth.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endOfMonth.toISOString().split('T')[0];
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sessionId = data.sessionId;
+                    currentUser = data.user;
+                    localStorage.setItem('sessionId', sessionId);
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    showDashboard();
+                } else {
+                    showMessage('loginMessage', data.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('loginMessage', 'Connection error: ' + error.message, 'error');
+            }
+        }
+
+        async function checkSession() {
+            try {
+                const response = await fetch(`${API_URL}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${sessionId}` }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    currentUser = user;
+                    showDashboard();
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                logout();
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+            document.getElementById('userName').textContent = currentUser.name || currentUser.email;
+            loadDashboardData();
+        }
+
+        function logout() {
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('user');
+            sessionId = null;
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboardScreen').classList.add('hidden');
+        }
+
+        function showView(viewName) {
+            // Hide all views
+            document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('nav a').forEach(nav => {
+                nav.classList.remove('sidebar-active');
+                nav.classList.add('text-gray-700', 'hover:bg-gray-100');
+            });
+            
+            // Show selected view
+            document.getElementById(viewName + 'View').classList.remove('hidden');
+            
+            // Activate nav item
+            const navItem = document.getElementById('nav-' + viewName);
+            navItem.classList.add('sidebar-active');
+            navItem.classList.remove('text-gray-700', 'hover:bg-gray-100');
+            
+            // Load data for specific views
+            if (viewName === 'reports') {
+                loadReports();
+            } else if (viewName === 'users') {
+                loadUsers();
+            } else if (viewName === 'dashboard') {
+                loadDashboardData();
+            }
+        }
+
+        async function loadDashboardData() {
+            await loadReports();
+            updateDashboardStats();
+        }
+
+        async function loadReports() {
+            try {
+                const response = await fetch(`${API_URL}/api/reports`, {
+                    headers: { 'Authorization': `Bearer ${sessionId}` }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const reports = data.reports || [];
+                    populateReportsTable(reports);
+                    updateDashboardStats(reports);
+                    updateClientFilter(reports);
+                }
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        function populateReportsTable(reports) {
+            const table = document.getElementById('reportsTable');
+            const recentTable = document.getElementById('recentReportsTable');
+            
+            const statusFilter = document.getElementById('statusFilter')?.value;
+            const clientFilter = document.getElementById('clientFilter')?.value;
+            
+            let filteredReports = reports;
+            if (statusFilter) {
+                filteredReports = filteredReports.filter(r => r.status === statusFilter);
+            }
+            if (clientFilter) {
+                filteredReports = filteredReports.filter(r => r.client_name === clientFilter);
+            }
+            
+            const tableHTML = filteredReports.length > 0 ? filteredReports.map(report => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${report.client_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${report.report_period}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium status-${report.status}">
+                            ${formatStatus(report.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(report.created_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewReport(${report.id})" class="text-blue-600 hover:text-blue-900 mr-2">View</button>
+                        ${canApprove(report) ? `<button onclick="approveReport(${report.id})" class="text-green-600 hover:text-green-900">Approve</button>` : ''}
+                    </td>
+                </tr>
+            `).join('') : '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No reports found</td></tr>';
+            
+            if (table) table.innerHTML = tableHTML;
+            if (recentTable) recentTable.innerHTML = reports.slice(0, 5).map(report => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${report.client_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${report.report_period}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium status-${report.status}">
+                            ${formatStatus(report.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(report.created_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewReport(${report.id})" class="text-blue-600 hover:text-blue-900">View</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No reports found</td></tr>';
+        }
+
+        function updateDashboardStats(reports = []) {
+            const pending = reports.filter(r => r.status === 'draft' || r.status.includes('pending')).length;
+            const approved = reports.filter(r => r.status === 'approved').length;
+            const rejected = reports.filter(r => r.status === 'rejected').length;
+            
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('rejectedCount').textContent = rejected;
+            document.getElementById('totalCount').textContent = reports.length;
+        }
+
+        function updateClientFilter(reports) {
+            const clientFilter = document.getElementById('clientFilter');
+            if (!clientFilter) return;
+            
+            const clients = [...new Set(reports.map(r => r.client_name))];
+            clientFilter.innerHTML = '<option value="">All Clients</option>' + 
+                clients.map(client => `<option value="${client}">${client}</option>`).join('');
+        }
+
+        async function handleGenerate(e) {
+            e.preventDefault();
+            
+            const clientName = document.getElementById('clientName').value;
+            const reportPeriod = document.getElementById('reportPeriod').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/reports`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionId}`
+                    },
+                    body: JSON.stringify({
+                        client_name: clientName,
+                        report_period: reportPeriod,
+                        start_date: startDate,
+                        end_date: endDate
+                    })
+                });
+                
+                const data = await response.json();
