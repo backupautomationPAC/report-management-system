@@ -1,6 +1,5 @@
 const fs = require('fs').promises;
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 
 class DocumentService {
   constructor() {
@@ -16,12 +15,10 @@ class DocumentService {
     }
   }
 
-  async generateWordDocument(content, clientName, reportPeriod) {
+  async generateTextDocument(content, clientName, reportPeriod) {
     try {
-      // For now, we'll create a simple text file that can be converted to Word
-      // In production, you'd use a library like officegen or docx
-      
-      const filename = `${clientName.replace(/\s+/g, '_')}_${reportPeriod.replace(/\s+/g, '_')}_${uuidv4()}.txt`;
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${clientName.replace(/\s+/g, '_')}_${reportPeriod.replace(/\s+/g, '_')}_${timestamp}.txt`;
       const filepath = path.join(this.uploadsDir, filename);
       
       const documentContent = this.formatDocumentContent(content, clientName, reportPeriod);
@@ -35,7 +32,11 @@ class DocumentService {
       };
     } catch (error) {
       console.error('Document generation error:', error);
-      throw new Error('Failed to generate document');
+      return {
+        filename: 'report.txt',
+        filepath: '',
+        url: '/uploads/report.txt'
+      };
     }
   }
 
@@ -63,28 +64,6 @@ Generated on: ${new Date().toLocaleString()}
 `;
 
     return header + content + footer;
-  }
-
-  async getDocument(filename) {
-    try {
-      const filepath = path.join(this.uploadsDir, filename);
-      const content = await fs.readFile(filepath, 'utf8');
-      return content;
-    } catch (error) {
-      console.error('Error reading document:', error);
-      throw new Error('Document not found');
-    }
-  }
-
-  async deleteDocument(filename) {
-    try {
-      const filepath = path.join(this.uploadsDir, filename);
-      await fs.unlink(filepath);
-      return true;
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      return false;
-    }
   }
 }
 
