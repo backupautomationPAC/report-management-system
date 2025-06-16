@@ -1,122 +1,219 @@
-// Ultra-simple in-memory data store using only built-in Node.js
 const crypto = require('crypto');
+const { Pool } = require('pg');
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Initialize database tables
+async function initializeDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(50) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reports (
+        id SERIAL PRIMARY KEY,
+        client_name VARCHAR(255) NOT NULL,
+        report_period VARCHAR(100) NOT NULL,
+        start_date DATE,
+        end_date DATE,
+        content TEXT,
+        harvest_data JSONB,
+        file_path VARCHAR(500),
+        status VARCHAR(50) DEFAULT 'draft',
+        submitted_by VARCHAR(255),
+        ae_approved_by VARCHAR(255),
+        ae_approved_at TIMESTAMP,
+        supervisor_approved_by VARCHAR(255),
+        supervisor_approved_at TIMESTAMP,
+        accounting_approved_by VARCHAR(255),
+        accounting_approved_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id VARCHAR(64) PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP NOT NULL
+      )
+    `);
+
+    // Insert default users if they don't exist
+    const defaultUsers = [
+      {
+        email: 'admin@tegpr.com',
+        password: simpleHash('admin123'),
+        role: 'admin',
+        name: 'Admin User'
+      },
+      {
+        email: 'ae@tegpr.com',
+        password: simpleHash('ae123'),
+        role: 'ae',
+        name: 'Account Executive'
+      },
+      {
+        email: 'supervisor@tegpr.com',
+        password: simpleHash('super123'),
+        role: 'supervisor',
+        name: 'Supervisor'
+      },
+      {
+        email: 'accounting@tegpr.com',
+        password: simpleHash('acc123'),
+        role: 'accounting',
+        name: 'Accounting'
+      }
+    ];
+
+    for (const user of defaultUsers) {
+      await pool.query(`
+        INSERT INTO users (email, password_hash, role, name)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (email) DO NOTHING
+      `, [user.email, user.password, user.role, user.name]);
+    }
+
+    console.log('✅ Database initialized successfully');
+  } catch (error) {
+    console.error('❌ Database initialization error:', error);
+  }
+}
 
 // Simple hash function using built-in crypto
 function simpleHash(password) {
   return crypto.createHash('sha256').update(password + 'salt123').digest('hex');
 }
 
-// In-memory users
-const users = [
-  {
-    id: 1,
-    email: 'admin@tegpr.com',
-    password: simpleHash('admin123'),
-    role: 'admin',
-    name: 'Admin User'
-  },
-  {
-    id: 2,
-    email: 'ae@tegpr.com',
-    password: simpleHash('ae123'),
-    role: 'ae',
-    name: 'Account Executive'
-  },
-  {
-    id: 3,
-    email: 'supervisor@tegpr.com',
-    password: simpleHash('super123'),
-    role: 'supervisor',
-    name: 'Supervisor'
-  }
-];
-
-// In-memory reports
-const reports = [];
-
-// Simple session store (using crypto for session IDs)
-const sessions = new Map();
-
 function generateSessionId() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-// Data access functions
+// Database access functions
 const db = {
   // User functions
-  findUserByEmail: (email) => {
-    return users.find(user => user.email === email);
+  findUserByEmail: async (email) => {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    return result.rows[0];
   },
-
-  findUserById: (id) => {
-    return users.find(user => user.id === parseInt(id));
+  
+  findUserById: async (id) => {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    return result.rows[0];
   },
-
-  getAllUsers: () => {
-    return users.map(user => ({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name
-    }));
+  
+  getAllUsers: async () => {
+    const result = await pool.query('SELECT id, email, role, name FROM users ORDER BY name');
+    return result.rows;
   },
-
+  
   verifyPassword: (password, hashedPassword) => {
     return simpleHash(password) === hashedPassword;
   },
-
+  
   // Session functions
-  createSession: (userId) => {
+  createSession: async (userId) => {
     const sessionId = generateSessionId();
-    sessions.set(sessionId, {
-      userId,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-    });
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    
+    await pool.query(
+      'INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)',
+      [sessionId, userId, expiresAt]
+    );
+    
     return sessionId;
   },
-
-  getSession: (sessionId) => {
-    const session = sessions.get(sessionId);
-    if (!session || session.expiresAt < new Date()) {
-      sessions.delete(sessionId);
-      return null;
-    }
-    return session;
+  
+  getSession: async (sessionId) => {
+    const result = await pool.query(`
+      SELECT s.*, u.id as user_id, u.email, u.role, u.name 
+      FROM sessions s 
+      JOIN users u ON s.user_id = u.id 
+      WHERE s.id = $1 AND s.expires_at > NOW()
+    `, [sessionId]);
+    
+    return result.rows[0];
   },
-
-  deleteSession: (sessionId) => {
-    sessions.delete(sessionId);
+  
+  deleteSession: async (sessionId) => {
+    await pool.query('DELETE FROM sessions WHERE id = $1', [sessionId]);
   },
-
+  
   // Report functions
-  getAllReports: () => {
-    return reports;
+  getAllReports: async () => {
+    const result = await pool.query(`
+      SELECT * FROM reports 
+      ORDER BY created_at DESC
+    `);
+    return result.rows;
   },
-
-  createReport: (reportData) => {
-    const newReport = {
-      id: reports.length + 1,
-      ...reportData,
-      created_at: new Date().toISOString(),
-      status: 'draft'
-    };
-    reports.push(newReport);
-    return newReport;
+  
+  createReport: async (reportData) => {
+    const result = await pool.query(`
+      INSERT INTO reports (client_name, report_period, start_date, end_date, content, harvest_data, submitted_by, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [
+      reportData.client_name,
+      reportData.report_period,
+      reportData.start_date,
+      reportData.end_date,
+      reportData.content,
+      JSON.stringify(reportData.harvest_data),
+      reportData.submitted_by,
+      'draft'
+    ]);
+    
+    return result.rows[0];
   },
-
-  findReportById: (id) => {
-    return reports.find(report => report.id === parseInt(id));
+  
+  findReportById: async (id) => {
+    const result = await pool.query('SELECT * FROM reports WHERE id = $1', [id]);
+    return result.rows[0];
   },
-
-  updateReport: (id, updateData) => {
-    const reportIndex = reports.findIndex(report => report.id === parseInt(id));
-    if (reportIndex !== -1) {
-      reports[reportIndex] = { ...reports[reportIndex], ...updateData };
-      return reports[reportIndex];
+  
+  updateReport: async (id, updateData) => {
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    for (const [key, value] of Object.entries(updateData)) {
+      fields.push(`${key} = $${paramIndex}`);
+      values.push(value);
+      paramIndex++;
     }
-    return null;
+    
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+    
+    const query = `
+      UPDATE reports 
+      SET ${fields.join(', ')} 
+      WHERE id = $${paramIndex} 
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, values);
+    return result.rows[0];
   }
 };
+
+// Initialize database on startup
+initializeDatabase();
 
 module.exports = db;

@@ -1,13 +1,16 @@
 const express = require('express');
 const db = require('../data/store');
 const authMiddleware = require('./auth-middleware');
+const harvestService = require('../services/harvest');
+const openaiService = require('../services/openai');
+const documentService = require('../services/document');
 
 const router = express.Router();
 
 // Get all reports
-router.get('/', authMiddleware, (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const reports = db.getAllReports();
+    const reports = await db.getAllReports();
     res.json({ reports });
   } catch (error) {
     console.error('Get reports error:', error);
@@ -15,42 +18,62 @@ router.get('/', authMiddleware, (req, res) => {
   }
 });
 
-// Create new report
-router.post('/', authMiddleware, (req, res) => {
+// Create new report with Harvest data and AI generation
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { client_name, report_period, start_date, end_date, content } = req.body;
-
+    const { client_name, report_period, start_date, end_date } = req.body;
+    
     if (!client_name || !report_period) {
       return res.status(400).json({ message: 'Client name and report period are required' });
     }
-
+    
+    console.log(`Generating report for ${client_name} from ${start_date} to ${end_date}`);
+    
+    // 1. Fetch Harvest data
+    const harvestData = await harvestService.getTimeEntries(start_date, end_date, client_name);
+    console.log(`Retrieved ${harvestData.length} time entries from Harvest`);
+    
+    // 2. Generate report content with OpenAI
+    const content = await openaiService.generateReport(harvestData, client_name, start_date, end_date);
+    console.log('Generated report content with AI');
+    
+    // 3. Create document
+    const document = await documentService.generateWordDocument(content, client_name, report_period);
+    console.log(`Generated document: ${document.filename}`);
+    
+    // 4. Save to database
     const reportData = {
       client_name,
       report_period,
       start_date,
       end_date,
-      content: content || `Sample report content for ${client_name}`,
+      content,
+      harvest_data: harvestData,
       submitted_by: req.user.email,
-      status: 'draft'
+      file_path: document.url
     };
-
-    const newReport = db.createReport(reportData);
-    res.status(201).json(newReport);
+    
+    const newReport = await db.createReport(reportData);
+    
+    res.status(201).json({
+      ...newReport,
+      message: 'Report generated successfully with Harvest data and AI content'
+    });
   } catch (error) {
     console.error('Create report error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error: ' + error.message });
   }
 });
 
 // Get specific report
-router.get('/:id', authMiddleware, (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const report = db.findReportById(req.params.id);
-
+    const report = await db.findReportById(req.params.id);
+    
     if (!report) {
       return res.status(404).json({ message: 'Report not found' });
     }
-
+    
     res.json(report);
   } catch (error) {
     console.error('Get report error:', error);
@@ -58,29 +81,58 @@ router.get('/:id', authMiddleware, (req, res) => {
   }
 });
 
-// Update report status
-router.patch('/:id/status', authMiddleware, (req, res) => {
+// Download report document
+router.get('/:id/download', authMiddleware, async (req, res) => {
+  try {
+    const report = await db.findReportById(req.params.id);
+    
+    if (!report || !report.file_path) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+    
+    const filename = path.basename(report.file_path);
+    const content = await documentService.getDocument(filename);
+    
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(content);
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ message: 'Error downloading document' });
+  }
+});
+
+// Update report status (approval workflow)
+router.patch('/:id/status', authMiddleware, async (req, res) => {
   try {
     const { status } = req.body;
-    const report = db.findReportById(req.params.id);
-
+    const report = await db.findReportById(req.params.id);
+    
     if (!report) {
       return res.status(404).json({ message: 'Report not found' });
     }
-
+    
     const validStatuses = ['draft', 'pending_ae', 'pending_supervisor', 'pending_accounting', 'approved', 'rejected'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
-
-    const updateData = { 
-      status,
-      [`${req.user.role}_approved_by`]: req.user.email,
-      [`${req.user.role}_approved_at`]: new Date().toISOString()
-    };
-
-    const updatedReport = db.updateReport(req.params.id, updateData);
-    res.json(updatedReport);
+    
+    // Approval workflow logic
+    const updateData = { status };
+    
+    if (status === 'approved' || status === 'rejected') {
+      const approvalField = `${req.user.role}_approved_by`;
+      const approvalTimeField = `${req.user.role}_approved_at`;
+      updateData[approvalField] = req.user.email;
+      updateData[approvalTimeField] = new Date();
+    }
+    
+    const updatedReport = await db.updateReport(req.params.id, updateData);
+    
+    res.json({
+      ...updatedReport,
+      message: `Report ${status} successfully`
+    });
   } catch (error) {
     console.error('Update report error:', error);
     res.status(500).json({ message: 'Server error' });
