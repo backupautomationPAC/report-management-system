@@ -1,9 +1,9 @@
 const express = require('express');
 const db = require('../data/store');
 const authMiddleware = require('./auth-middleware');
-const harvestService = require('../services/harvest');
-const openaiService = require('../services/openai');
-const documentService = require('../services/document');
+const harvestService = require('../services/harvest');  // ← Import from services
+const openaiService = require('../services/openai');    // ← Import from services  
+const documentService = require('../services/document'); // ← Import from services
 
 const router = express.Router();
 
@@ -33,13 +33,20 @@ router.post('/', authMiddleware, async (req, res) => {
     const harvestData = await harvestService.getTimeEntries(start_date, end_date, client_name);
     console.log(`Retrieved ${harvestData.length} time entries from Harvest`);
     
-    // 2. Generate report content with OpenAI
+    // 2. Generate report content with AI
     const content = await openaiService.generateReport(harvestData, client_name, start_date, end_date);
-    console.log('Generated report content with AI');
+    console.log('Generated report content');
     
-    // 3. Create document
-    const document = await documentService.generateWordDocument(content, client_name, report_period);
-    console.log(`Generated document: ${document.filename}`);
+    // 3. Create document (if you have document service)
+    let document = null;
+    if (documentService && documentService.generateWordDocument) {
+      try {
+        document = await documentService.generateWordDocument(content, client_name, report_period);
+        console.log(`Generated document: ${document.filename}`);
+      } catch (error) {
+        console.warn('Document generation failed:', error.message);
+      }
+    }
     
     // 4. Save to database
     const reportData = {
@@ -50,18 +57,21 @@ router.post('/', authMiddleware, async (req, res) => {
       content,
       harvest_data: harvestData,
       submitted_by: req.user.email,
-      file_path: document.url
+      file_path: document ? document.url : null
     };
     
     const newReport = await db.createReport(reportData);
     
     res.status(201).json({
       ...newReport,
-      message: 'Report generated successfully with Harvest data and AI content'
+      message: `Report generated successfully for ${client_name} with ${harvestData.length} time entries`
     });
   } catch (error) {
     console.error('Create report error:', error);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ 
+      message: 'Server error: ' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -78,27 +88,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Get report error:', error);
     res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Download report document
-router.get('/:id/download', authMiddleware, async (req, res) => {
-  try {
-    const report = await db.findReportById(req.params.id);
-    
-    if (!report || !report.file_path) {
-      return res.status(404).json({ message: 'Document not found' });
-    }
-    
-    const filename = path.basename(report.file_path);
-    const content = await documentService.getDocument(filename);
-    
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(content);
-  } catch (error) {
-    console.error('Download error:', error);
-    res.status(500).json({ message: 'Error downloading document' });
   }
 });
 

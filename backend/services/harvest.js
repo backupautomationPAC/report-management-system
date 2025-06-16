@@ -20,18 +20,21 @@ class HarvestService {
         to: endDate
       };
 
+      console.log('Fetching Harvest time entries:', params);
       const response = await axios.get(`${this.baseURL}/time_entries`, {
         headers,
         params
       });
 
       let timeEntries = response.data.time_entries || [];
+      console.log(`Retrieved ${timeEntries.length} time entries from Harvest`);
 
       // Filter by client if specified
       if (clientName) {
         timeEntries = timeEntries.filter(entry => 
           entry.client && entry.client.name.toLowerCase().includes(clientName.toLowerCase())
         );
+        console.log(`Filtered to ${timeEntries.length} entries for client: ${clientName}`);
       }
 
       return this.formatTimeEntries(timeEntries);
@@ -39,6 +42,7 @@ class HarvestService {
       console.error('Harvest API error:', error.response?.data || error.message);
       
       // Return mock data if Harvest API fails
+      console.log('Using mock data due to Harvest API error');
       return this.getMockData(startDate, endDate, clientName);
     }
   }
@@ -101,13 +105,39 @@ class HarvestService {
         'User-Agent': 'TEG Report System (admin@tegpr.com)'
       };
 
+      console.log('Fetching Harvest clients');
       const response = await axios.get(`${this.baseURL}/clients`, { headers });
-      return response.data.clients || [];
+      const clients = response.data.clients || [];
+      console.log(`Retrieved ${clients.length} clients from Harvest`);
+      return clients;
     } catch (error) {
       console.error('Harvest clients error:', error.response?.data || error.message);
+      console.log('Using mock clients due to Harvest API error');
       return [
         { id: 1, name: 'BESH RESTAURANT GROUP' },
-        { id: 2, name: 'OCHSNER HEALTH' }
+        { id: 2, name: 'OCHSNER HEALTH' },
+        { id: 3, name: 'SAMPLE CLIENT A' },
+        { id: 4, name: 'SAMPLE CLIENT B' }
+      ];
+    }
+  }
+
+  async getProjects() {
+    try {
+      const headers = {
+        'Harvest-Account-ID': this.accountId,
+        'Authorization': `Bearer ${this.token}`,
+        'User-Agent': 'TEG Report System (admin@tegpr.com)'
+      };
+
+      const response = await axios.get(`${this.baseURL}/projects`, { headers });
+      return response.data.projects || [];
+    } catch (error) {
+      console.error('Harvest projects error:', error.response?.data || error.message);
+      return [
+        { id: 1, name: 'Media Relations', client_id: 1 },
+        { id: 2, name: 'Event Planning', client_id: 1 },
+        { id: 3, name: 'Crisis Communications', client_id: 2 }
       ];
     }
   }
