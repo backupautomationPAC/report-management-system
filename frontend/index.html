@@ -27,28 +27,22 @@
                     <p class="text-sm text-blue-600">Email: admin@tegpr.com | Password: admin123</p>
                 </div>
             </div>
-            <form id="loginForm" class="mt-8 space-y-6" autocomplete="on">
+            <form id="loginForm" class="mt-8 space-y-6">
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                     <input type="email" id="email" name="email" value="admin@tegpr.com" required 
-                           autocomplete="email"
-                           aria-label="Email address"
-                           placeholder="Enter your email"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                     <input type="password" id="password" name="password" value="admin123" required 
-                           autocomplete="current-password"
-                           aria-label="Password"
-                           placeholder="Enter your password"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                 </div>
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                     Sign in
                 </button>
             </form>
-            <div id="loginMessage" class="text-center text-sm" aria-live="polite"></div>
+            <div id="loginMessage" class="text-center text-sm"></div>
         </div>
     </div>
 
@@ -61,8 +55,8 @@
                     <h1 class="text-2xl font-bold text-gray-900">TEG Report Management</h1>
                     <div class="flex items-center space-x-4">
                         <span class="text-sm text-gray-700">Welcome back, <span id="userName">User</span></span>
-                        <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                            <i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>Logout
+                        <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
                         </button>
                     </div>
                 </div>
@@ -71,27 +65,27 @@
 
         <div class="flex">
             <!-- Sidebar -->
-            <nav class="w-64 bg-white shadow-lg min-h-screen" aria-label="Main navigation">
+            <nav class="w-64 bg-white shadow-lg min-h-screen">
                 <div class="p-4">
                     <div class="space-y-2">
-                        <a href="#" onclick="showView('dashboard')" id="nav-dashboard" class="sidebar-active flex items-center px-4 py-2 text-sm font-medium rounded-md" aria-current="page">
-                            <i class="fas fa-tachometer-alt mr-3" aria-hidden="true"></i>Dashboard
+                        <a href="#" onclick="showView('dashboard')" id="nav-dashboard" class="sidebar-active flex items-center px-4 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
                         </a>
                         <a href="#" onclick="showView('reports')" id="nav-reports" class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
-                            <i class="fas fa-file-alt mr-3" aria-hidden="true"></i>Reports
+                            <i class="fas fa-file-alt mr-3"></i>Reports
                         </a>
                         <a href="#" onclick="showView('generate')" id="nav-generate" class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
-                            <i class="fas fa-plus-circle mr-3" aria-hidden="true"></i>Generate Reports
+                            <i class="fas fa-plus-circle mr-3"></i>Generate Reports
                         </a>
                         <a href="#" onclick="showView('users')" id="nav-users" class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
-                            <i class="fas fa-users mr-3" aria-hidden="true"></i>Users
+                            <i class="fas fa-users mr-3"></i>Users
                         </a>
                     </div>
                 </div>
             </nav>
 
             <!-- Main Content -->
-            <main class="flex-1 p-6" role="main">
+            <main class="flex-1 p-6">
                 <!-- Dashboard View -->
                 <div id="dashboardView" class="view">
                     <div class="mb-6">
@@ -105,7 +99,7 @@
                             <div class="p-5">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <i class="fas fa-clock text-2xl text-yellow-600" aria-hidden="true"></i>
+                                        <i class="fas fa-clock text-2xl text-yellow-600"></i>
                                     </div>
                                     <div class="ml-5 w-0 flex-1">
                                         <dl>
@@ -121,7 +115,7 @@
                             <div class="p-5">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <i class="fas fa-check-circle text-2xl text-green-600" aria-hidden="true"></i>
+                                        <i class="fas fa-check-circle text-2xl text-green-600"></i>
                                     </div>
                                     <div class="ml-5 w-0 flex-1">
                                         <dl>
@@ -137,7 +131,7 @@
                             <div class="p-5">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <i class="fas fa-times-circle text-2xl text-red-600" aria-hidden="true"></i>
+                                        <i class="fas fa-times-circle text-2xl text-red-600"></i>
                                     </div>
                                     <div class="ml-5 w-0 flex-1">
                                         <dl>
@@ -153,7 +147,7 @@
                             <div class="p-5">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0">
-                                        <i class="fas fa-file-alt text-2xl text-blue-600" aria-hidden="true"></i>
+                                        <i class="fas fa-file-alt text-2xl text-blue-600"></i>
                                     </div>
                                     <div class="ml-5 w-0 flex-1">
                                         <dl>
@@ -174,11 +168,11 @@
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="recentReportsTable" class="bg-white divide-y divide-gray-200">
@@ -205,11 +199,11 @@
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="reportsTable" class="bg-white divide-y divide-gray-200">
@@ -232,29 +226,27 @@
 
                     <div class="bg-white shadow rounded-lg">
                         <div class="px-4 py-5 sm:p-6">
-                            <form id="generateForm" class="space-y-6" autocomplete="on">
+                            <form id="generateForm" class="space-y-6">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
-                                        <input type="date" id="startDate" name="startDate" required 
-                                               aria-label="Report start date"
+                                        <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                                        <input type="date" id="startDate" required 
                                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                     </div>
                                     <div>
-                                        <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
-                                        <input type="date" id="endDate" name="endDate" required 
-                                               aria-label="Report end date"
+                                        <label class="block text-sm font-medium text-gray-700">End Date</label>
+                                        <input type="date" id="endDate" required 
                                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                                     </div>
                                 </div>
                                 
-                                <div class="bg-blue-50 border border-blue-200 rounded-md p-4" role="region" aria-labelledby="info-heading">
+                                <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
                                     <div class="flex">
                                         <div class="flex-shrink-0">
-                                            <i class="fas fa-info-circle text-blue-400" aria-hidden="true"></i>
+                                            <i class="fas fa-info-circle text-blue-400"></i>
                                         </div>
                                         <div class="ml-3">
-                                            <h3 id="info-heading" class="text-sm font-medium text-blue-800">Monthly Report Generation</h3>
+                                            <h3 class="text-sm font-medium text-blue-800">Monthly Report Generation</h3>
                                             <div class="mt-2 text-sm text-blue-700">
                                                 <p>This will generate reports for ALL clients with Harvest data in the selected date range.</p>
                                                 <p>Each client will get their own individual report with their specific time tracking data.</p>
@@ -263,13 +255,13 @@
                                     </div>
                                 </div>
                                 
-                                <button type="submit" id="generateButton" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                    <i class="fas fa-cogs mr-2" aria-hidden="true"></i>Generate Reports for All Clients
+                                <button type="submit" id="generateButton" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    <i class="fas fa-cogs mr-2"></i>Generate Reports for All Clients
                                 </button>
                             </form>
                             
-                            <div id="generateMessage" class="mt-4" aria-live="polite"></div>
-                            <div id="generateProgress" class="mt-4 hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                            <div id="generateMessage" class="mt-4"></div>
+                            <div id="generateProgress" class="mt-4 hidden">
                                 <div class="bg-gray-200 rounded-full h-2">
                                     <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                                 </div>
@@ -283,7 +275,7 @@
                 <div id="usersView" class="view hidden">
                     <div class="mb-6">
                         <h2 class="text-2xl font-bold text-gray-900">Users</h2>
-                        <p class="text-gray-600">System users and permissions</p>
+                        <p class="text-gray-600">System users</p>
                     </div>
 
                     <div class="bg-white shadow rounded-lg">
@@ -292,9 +284,9 @@
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
                                         <tr>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                                         </tr>
                                     </thead>
                                     <tbody id="usersTable" class="bg-white divide-y divide-gray-200">
@@ -316,15 +308,46 @@
         let sessionId = localStorage.getItem('sessionId');
         let currentUser = null;
 
+        console.log('🔍 DEBUG: Script starting...');
+        console.log('🔍 DEBUG: API_URL:', API_URL);
+        console.log('🔍 DEBUG: Initial sessionId:', sessionId);
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('App initializing...');
+            console.log('🔍 DEBUG: DOM loaded, initializing app...');
+            
+            // Show login screen by default
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboardScreen').classList.add('hidden');
+            
             if (sessionId) {
+                console.log('🔍 DEBUG: Found existing session, checking validity...');
                 checkSession();
+            } else {
+                console.log('🔍 DEBUG: No existing session found, showing login');
             }
+            
             setupEventListeners();
             setDefaultDates();
         });
+
+        function setupEventListeners() {
+            console.log('🔍 DEBUG: Setting up event listeners...');
+            
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                console.log('🔍 DEBUG: Login form found, attaching event listener');
+                loginForm.addEventListener('submit', handleLogin);
+            } else {
+                console.error('🔍 DEBUG: Login form NOT found!');
+            }
+            
+            const generateForm = document.getElementById('generateForm');
+            if (generateForm) {
+                console.log('🔍 DEBUG: Generate form found, attaching event listener');
+                generateForm.addEventListener('submit', handleGenerate);
+            }
+        }
 
         function setDefaultDates() {
             const now = new Date();
@@ -338,20 +361,16 @@
             if (endDate) endDate.value = endOfMonth.toISOString().split('T')[0];
         }
 
-        function setupEventListeners() {
-            const loginForm = document.getElementById('loginForm');
-            const generateForm = document.getElementById('generateForm');
-            
-            if (loginForm) loginForm.addEventListener('submit', handleLogin);
-            if (generateForm) generateForm.addEventListener('submit', handleGenerate);
-        }
-
         async function handleLogin(e) {
             e.preventDefault();
-            console.log('Login attempt...');
+            console.log('🔍 DEBUG: Login button clicked!');
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            
+            console.log('🔍 DEBUG: Email:', email);
+            console.log('🔍 DEBUG: Password length:', password.length);
+            console.log('🔍 DEBUG: Making fetch request to:', `${API_URL}/api/auth/login`);
             
             try {
                 const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -360,44 +379,56 @@
                     body: JSON.stringify({ email, password })
                 });
                 
+                console.log('🔍 DEBUG: Response status:', response.status);
+                console.log('🔍 DEBUG: Response ok:', response.ok);
+                
                 const data = await response.json();
-                console.log('Login response:', data);
+                console.log('🔍 DEBUG: Response data:', data);
                 
                 if (response.ok) {
+                    console.log('🔍 DEBUG: Login successful!');
                     sessionId = data.sessionId;
                     currentUser = data.user;
                     localStorage.setItem('sessionId', sessionId);
                     localStorage.setItem('user', JSON.stringify(currentUser));
                     showDashboard();
                 } else {
+                    console.log('🔍 DEBUG: Login failed:', data.message);
                     showMessage('loginMessage', data.message || 'Login failed', 'error');
                 }
             } catch (error) {
-                console.error('Login error:', error);
+                console.error('🔍 DEBUG: Login error:', error);
+                console.error('🔍 DEBUG: Error details:', error.message);
                 showMessage('loginMessage', 'Connection error: ' + error.message, 'error');
             }
         }
 
         async function checkSession() {
+            console.log('🔍 DEBUG: Checking session validity...');
             try {
                 const response = await fetch(`${API_URL}/api/auth/me`, {
                     headers: { 'Authorization': `Bearer ${sessionId}` }
                 });
                 
+                console.log('🔍 DEBUG: Session check response:', response.status);
+                
                 if (response.ok) {
                     const user = await response.json();
+                    console.log('🔍 DEBUG: Session valid, user:', user);
                     currentUser = user;
                     showDashboard();
                 } else {
+                    console.log('🔍 DEBUG: Session invalid, logging out');
                     logout();
                 }
             } catch (error) {
+                console.error('🔍 DEBUG: Session check error:', error);
                 logout();
             }
         }
 
         function showDashboard() {
-            console.log('Showing dashboard...');
+            console.log('🔍 DEBUG: Showing dashboard...');
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('dashboardScreen').classList.remove('hidden');
             const userNameElement = document.getElementById('userName');
@@ -408,6 +439,7 @@
         }
 
         function logout() {
+            console.log('🔍 DEBUG: Logging out...');
             localStorage.removeItem('sessionId');
             localStorage.removeItem('user');
             sessionId = null;
@@ -417,31 +449,19 @@
         }
 
         function showView(viewName) {
-            // Hide all views
+            console.log('🔍 DEBUG: Showing view:', viewName);
             document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
-            
-            // Update navigation
             document.querySelectorAll('nav a').forEach(nav => {
                 nav.classList.remove('sidebar-active');
                 nav.classList.add('text-gray-700', 'hover:bg-gray-100');
-                nav.removeAttribute('aria-current');
             });
             
-            // Show selected view
-            const viewElement = document.getElementById(viewName + 'View');
-            if (viewElement) {
-                viewElement.classList.remove('hidden');
-            }
+            document.getElementById(viewName + 'View').classList.remove('hidden');
             
-            // Activate nav item
             const navItem = document.getElementById('nav-' + viewName);
-            if (navItem) {
-                navItem.classList.add('sidebar-active');
-                navItem.classList.remove('text-gray-700', 'hover:bg-gray-100');
-                navItem.setAttribute('aria-current', 'page');
-            }
+            navItem.classList.add('sidebar-active');
+            navItem.classList.remove('text-gray-700', 'hover:bg-gray-100');
             
-            // Load data for specific views
             if (viewName === 'reports' || viewName === 'dashboard') {
                 loadReports();
             } else if (viewName === 'users') {
@@ -450,21 +470,24 @@
         }
 
         async function loadReports() {
+            console.log('🔍 DEBUG: Loading reports...');
             try {
                 const response = await fetch(`${API_URL}/api/reports`, {
                     headers: { 'Authorization': `Bearer ${sessionId}` }
                 });
                 
+                console.log('🔍 DEBUG: Reports response status:', response.status);
                 const data = await response.json();
+                console.log('🔍 DEBUG: Reports data:', data);
                 
                 if (response.ok) {
                     const reports = data.reports || [];
-                    console.log('Loaded reports:', reports);
+                    console.log('🔍 DEBUG: Loaded', reports.length, 'reports');
                     populateReportsTable(reports);
                     updateDashboardStats(reports);
                 }
             } catch (error) {
-                console.error('Error loading reports:', error);
+                console.error('🔍 DEBUG: Error loading reports:', error);
             }
         }
 
@@ -483,7 +506,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(report.created_at)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button class="text-blue-600 hover:text-blue-900" onclick="viewReport(${report.id})">View</button>
+                        <button class="text-blue-600 hover:text-blue-900">View</button>
                     </td>
                 </tr>
             `).join('') : '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No reports found</td></tr>';
@@ -510,80 +533,60 @@
 
         async function handleGenerate(e) {
             e.preventDefault();
+            console.log('🔍 DEBUG: Generate form submitted');
             
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
-            const generateButton = document.getElementById('generateButton');
-            const progressDiv = document.getElementById('generateProgress');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
+            
+            console.log('🔍 DEBUG: Date range:', startDate, 'to', endDate);
             
             if (!startDate || !endDate) {
                 showMessage('generateMessage', 'Please select both start and end dates', 'error');
                 return;
             }
             
-            // Disable button and show progress
-            if (generateButton) {
-                generateButton.disabled = true;
-                generateButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>Generating Reports...';
-            }
-            if (progressDiv) progressDiv.classList.remove('hidden');
-            
+            // Simple test generation
+            showMessage('generateMessage', 'Report generation feature is being implemented...', 'success');
+        }
+
+        async function loadUsers() {
+            console.log('🔍 DEBUG: Loading users...');
             try {
-                // Step 1: Get clients from Harvest
-                if (progressBar) progressBar.style.width = '20%';
-                if (progressText) progressText.textContent = 'Fetching clients from Harvest...';
-                
-                const clientsResponse = await fetch(`${API_URL}/api/harvest/clients`, {
+                const response = await fetch(`${API_URL}/api/users`, {
                     headers: { 'Authorization': `Bearer ${sessionId}` }
                 });
                 
-                if (!clientsResponse.ok) {
-                    throw new Error('Failed to fetch clients');
-                }
-                
-                const clientsData = await clientsResponse.json();
-                const clients = clientsData.clients || [];
-                
-                if (clients.length === 0) {
-                    showMessage('generateMessage', 'No clients found in Harvest', 'error');
-                    return;
-                }
-                
-                if (progressBar) progressBar.style.width = '40%';
-                if (progressText) progressText.textContent = `Found ${clients.length} clients. Generating reports...`;
-                
-                // Step 2: Generate reports for each client
-                const results = [];
-                const reportPeriod = formatDateRange(startDate, endDate);
-                
-                for (let i = 0; i < clients.length; i++) {
-                    const client = clients[i];
-                    const progress = 40 + ((i + 1) / clients.length) * 50;
+                if (response.ok) {
+                    const data = await response.json();
+                    const users = data.users || [];
+                    console.log('🔍 DEBUG: Loaded', users.length, 'users');
                     
-                    if (progressBar) progressBar.style.width = `${progress}%`;
-                    if (progressText) progressText.textContent = `Generating report for ${client.name}... (${i + 1}/${clients.length})`;
-                    
-                    try {
-                        const response = await fetch(`${API_URL}/api/reports`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${sessionId}`
-                            },
-                            body: JSON.stringify({
-                                client_name: client.name,
-                                report_period: reportPeriod,
-                                start_date: startDate,
-                                end_date: endDate
-                            })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (response.ok) {
-                            results.push({ client: client.name, status: 'success', report: data });
-                        } else {
-                            results.push({ client: client.name, status: 'error', error: data.message });
-                        }
+                    const table = document.getElementById('usersTable');
+                    table.innerHTML = users.map(user => `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.role}</td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">No users found</td></tr>';
+                }
+            } catch (error) {
+                console.error('🔍 DEBUG: Error loading users:', error);
+            }
+        }
+
+        function showMessage(elementId, text, type) {
+            const messageDiv = document.getElementById(elementId);
+            if (messageDiv) {
+                messageDiv.textContent = text;
+                messageDiv.className = `text-center text-sm ${type === 'error' ? 'text-red-600' : 'text-green-600'}`;
+            }
+        }
+
+        function formatStatus(status) {
+            return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
